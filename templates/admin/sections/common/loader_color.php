@@ -1,0 +1,1 @@
+<input type="text" class="regular-text" data-slm-colorpicker placeholder="Select Loader Color" id="slm_options_loader_color" name="slm_options[loader_color]" value="<?php echo srvlm_get_option( 'loader_color', srvlm_default_color() ); ?>">

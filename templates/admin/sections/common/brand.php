@@ -1,0 +1,1 @@
+<input type="text" class="widefat" placeholder="Enter Survey Brand" id="slm_options_brand" name="slm_options[brand]" value="<?php echo srvlm_get_option( 'brand' ); ?>">

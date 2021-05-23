@@ -1,0 +1,1 @@
+<input type="text" class="regular-text" data-slm-colorpicker placeholder="Select CTA Button Color" id="slm_options_cta_button_color" name="slm_options[cta_button_color]" value="<?php echo srvlm_get_option( 'cta_button_color', srvlm_default_color('#5cb85c') ); ?>">

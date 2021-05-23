@@ -1,0 +1,26 @@
+@import "partials/loaders";
+
+.slm-cta-holder {
+  height: 300px;
+  text-align: center;
+  transition: all .3s;
+  padding-top: 90px;
+  box-sizing: border-box;
+
+  .slm-cta-text {
+    margin-bottom: 15px;
+    padding: 0 15px;
+    font: 600 28px/1.125 serif;
+    font-family: Poppins,Roboto,sans-serif;
+  }
+
+  [data-slm-cta] {
+    font-family: Poppins, Roboto, Arial, sans-serif;
+    font-size: 18px;
+    padding: 10px 45px;
+  }
+}
+
+.slm-cta-container {
+  display: none;
+}

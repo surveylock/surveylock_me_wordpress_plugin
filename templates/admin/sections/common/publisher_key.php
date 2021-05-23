@@ -1,0 +1,1 @@
+<input type="text" class="regular-text" placeholder="Your Publisher key" id="slm_options_publisher_key" name="slm_options[publisher_key]" value="<?php echo srvlm_get_option( 'publisher_key' ); ?>">

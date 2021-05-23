@@ -1,0 +1,1 @@
+<input type="text" class="regular-text" placeholder="Enter CTA Title" id="slm_options_cta_text" name="slm_options[cta_text]" value="<?php echo srvlm_get_option( 'cta_text', 'Click to get your result' ); ?>">

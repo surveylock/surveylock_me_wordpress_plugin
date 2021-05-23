@@ -1,0 +1,13 @@
+{
+  "autoload": {
+    "files": [
+      "config/providers.php",
+      "utils/helpers.php"
+    ],
+    "psr-4": {
+      "TenPixls\\SurveyLockMe\\": "src/"
+    }
+  },
+  "require": {
+  }
+}
