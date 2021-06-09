@@ -8,6 +8,8 @@ use TenPixls\SurveyLockMe\Providers\SLMProviderInterface;
 class SLMContentProvider extends SLMProviderAbstract {
 	const SHORTCODE = 'slm_content_lock';
 
+	private static $_showFrontendContent = false;
+
 
 	public function isEnabled() {
 		return true;
@@ -103,13 +105,17 @@ class SLMContentProvider extends SLMProviderAbstract {
 	}
 
 	protected function _getMaxHeight() {
-		return intval(srvlm_get_option( 'content.max_block_height'));
+		return intval( srvlm_get_option( 'content.max_block_height' ) );
 	}
 
 	private function _showFrontendAssets() {
-		$post = get_post();
-
-		return has_shortcode( $post->post_content, self::SHORTCODE ) && $this->_isOptionEnabled( $post );
+		if ( ! self::$_showFrontendContent ) {
+			$post = get_post();
+			
+			self::$_showFrontendContent = has_shortcode( $post->post_content, self::SHORTCODE ) && $this->_isOptionEnabled( $post );
+		}
+		
+		return self::$_showFrontendContent;
 	}
 
 	public function initFrontendAssets() {
@@ -294,8 +300,8 @@ class SLMContentProvider extends SLMProviderAbstract {
 
 	public function initShortcode( $attrs, $content = null ) {
 		$infoBoxText = $this->_getInfoBoxText();
-		$maxHeight = $this->_getMaxHeight();
-		
+		$maxHeight   = $this->_getMaxHeight();
+
 		return srvlm_render_partial( 'shortcode', 'public', compact( 'attrs', 'content', 'infoBoxText', 'maxHeight' ), true );
 	}
 

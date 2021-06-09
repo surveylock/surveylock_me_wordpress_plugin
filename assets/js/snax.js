@@ -11,8 +11,8 @@
         additionalElementsSelector : '.g1-newsletter',
         resultsSelector            : '.snax-quiz-results',
         surveyIframeSelector       : slm.getSelector('LnN1cnZhdGEtZWxlbWVudC1jb250YWluZXIgaWZyYW1l'),
+        heightFixed                : false
     };
-
 
     const slmSnaxInit = ($, $snaxContainer, $questions) => {
         const slmSnax = {
@@ -107,10 +107,14 @@
                 })
             },
             fixSurveyHeight    : () => {
-                slmSnax.getSurveyBlock().height(700);
                 const $iframe = slmSnax.getSurveyBlock().find(slmSnaxParams.surveyIframeSelector);
-                if (parseInt($iframe.height(), 10) < 800) {
-                    $iframe.height('700px');
+
+                if (!slmSnaxParams.heightFixed) {
+                    slmSnax.getSurveyBlock().height(700);
+                    if (parseInt($iframe.height(), 10) < 800) {
+                        $iframe.height('700');
+                        slmSnaxParams.heightFixed = true;
+                    }
                 }
             },
             showInterview      : () => {
@@ -118,6 +122,9 @@
                     slmSnax.removeCTA();
                     slmSnax.removeSurveyLoader(true);
                     slmSnax.fixSurveyHeight();
+                    setTimeout(slmSnax.fixSurveyHeight, 600);
+                    setTimeout(slmSnax.fixSurveyHeight, 1600);
+                    setTimeout(slmSnax.fixSurveyHeight, 3200);
 
                     slmSnax._interviewStarted = true;
                 }
@@ -130,7 +137,8 @@
 
         slm.init();
         slm.readyCallback(() => {
-            slm.log('SurveyLock.me Snax addon:: Loading Survey');
+            slm.trigger('slm.snax.loading');
+            slm.log('SurveyLock.me Snax addon:: Loading interview');
 
             const s = slm.createSurveywall({
                 parent    : slmSnax.getSurveyBlock(),
@@ -139,9 +147,8 @@
             });
 
             s.on('load', function (data) {
-                slm.trigger('slm.snax.loaded');
-                slm.log('SurveyLock.me Snax addon:: Survey loaded. Status: ' + data.status);
-                slm.trigger('slm.snax.status', data.status);
+                slm.trigger('slm.snax.loaded', data.status);
+                slm.log('SurveyLock.me Snax addon:: Interview loaded. Status: ' + data.status);
 
                 slmSnax.showCTA(() => {
                     if (data.status === 'monetizable') {
@@ -160,7 +167,7 @@
 
             s.on('interviewStart', function () {
                 slm.trigger('slm.snax.started');
-                slm.log('SurveyLock.me Snax addon:: Survey started');
+                slm.log('SurveyLock.me Snax addon:: Interview started');
 
                 slmSnax.getSurveyBlock()
                     .find(slmSnaxParams.surveyIframeSelector)
@@ -170,19 +177,19 @@
             });
             s.on('interviewComplete', function () {
                 slm.trigger('slm.snax.completed');
-                slm.log('SurveyLock.me Snax addon:: Survey completed');
+                slm.log('SurveyLock.me Snax addon:: Interview completed');
 
                 slmSnax.showResults('slm-snax-completed');
             });
             s.on('interviewAbandon', function () {
                 slm.trigger('slm.snax.abandoned');
-                slm.log('SurveyLock.me Snax addon:: Survey abandoned');
+                slm.log('SurveyLock.me Snax addon:: Interview abandoned');
 
                 slmSnax.showResults('slm-snax-abandoned');
             });
             s.on('interviewSkip', function () {
                 slm.trigger('slm.snax.skipped');
-                slm.log('SurveyLock.me Snax addon:: Survey skipped');
+                slm.log('SurveyLock.me Snax addon:: Interview skipped');
 
                 slmSnax.showResults('slm-snax-skipped');
             });
@@ -190,7 +197,7 @@
         });
         slm.failCallback(() => {
             slm.trigger('slm.snax.failed');
-            slm.log('Survey failed to load');
+            slm.log('SurveyLock.me Snax addon:: Survey failed');
 
             slmSnax.showResults('slm-snax-failed');
         });
@@ -204,8 +211,42 @@
 
             if ($snaxContainer.length) {
                 slmSnaxInit($, $snaxContainer, $questions);
+                slm.applyCallbacks();
             }
-        })
+        });
+
+        $(document)
+            .on('slm.snax.loaded', function (e, status) {
+                slm.gtag('event', status, {
+                    'event_category' : 'SurveyLock - Snax',
+                    'event_label'    : window.location.href
+                });
+            })
+            .on('slm.snax.started', function () {
+                slm.gtag('event', 'Interview started', {
+                    'event_category' : 'SurveyLock - Snax',
+                    'event_label'    : window.location.href
+                });
+            })
+            .on('slm.snax.completed', function () {
+                slm.gtag('event', 'Interview completed', {
+                    'event_category' : 'SurveyLock - Snax',
+                    'event_label'    : window.location.href
+                });
+                slm.fbq('track', 'Lead');
+            })
+            .on('slm.snax.abandoned', function () {
+                slm.gtag('event', 'Interview abandoned', {
+                    'event_category' : 'SurveyLock - Snax',
+                    'event_label'    : window.location.href
+                });
+            })
+            .on('slm.snax.failed', function () {
+                slm.gtag('event', 'Survey failed', {
+                    'event_category' : 'SurveyLock - Snax',
+                    'event_label'    : window.location.href
+                });
+            });
     });
 
     slm.log('SurveyLock.me Snax addon initialized');

@@ -1,11 +1,37 @@
 const slm = {
     isDebugMode      : slmConfig.isDebugMode === '1',
+    readyCallbacks   : [],
+    failCallbacks    : [],
     log              : (...params) => {
         if (slm.isDebugMode) {
             console.log(...params);
         }
     },
     trigger          : () => {
+    },
+    gtag             : (...params) => {
+        try {
+            if (window.gtag) {
+                gtag(...params);
+                slm.log('gtag:', ...params);
+            } else {
+                slm.log('gtag not initialized');
+            }
+        } catch (e) {
+            slm.log('gtag not initialized');
+        }
+    },
+    fbq              : (...params) => {
+        try {
+            if (window.fbq) {
+                fbq(...params);
+                slm.log('fbq:', ...params);
+            } else {
+                slm.log('fbq not initialized');
+            }
+        } catch (e) {
+            slm.log('fbq not initialized');
+        }
     },
     init             : () => {
         (function (w, d, t, v) {
@@ -32,7 +58,7 @@ const slm = {
                         fn.call(w[v]);
                         return w[v];
                     };
-                }, 5000);
+                }, 15000);
             };
             w[v].ready = function () {
                 g();
@@ -49,28 +75,38 @@ const slm = {
     },
     createSurveywall : (params) => {
         const defaultParams = {
-            testing       : (slmConfig.testing === '1'),
-            hideFooter    : true,
-            hideProgress  : true,
-            disallowClose : true,
-            allowSkip     : false
+            testing        : (slmConfig.testing === '1'),
+            hideFooter     : true,
+            hideProgress   : true,
+            disallowClose  : true,
+            verticalLayout : true,
+            allowSkip      : false
         };
 
         return slm.getSurvey().createSurveywall({...defaultParams, ...params});
     },
     readyCallback    : (callback) => {
-        slm.getSurvey().ready(callback, true);
+        slm.readyCallbacks.push(callback);
     },
     failCallback     : (callback) => {
-        slm.getSurvey().fail(callback);
+        slm.failCallbacks.push(callback);
     },
-    getContainer : () => {
-        
+    applyCallbacks   : () => {
+        slm.getSurvey().ready(() => {
+            slm.readyCallbacks.forEach(callback => callback())
+        }, true);
+
+        slm.getSurvey().fail(() => {
+            slm.failCallbacks.forEach(callback => callback())
+        });
     },
-    getSelector : s  => {
+    getContainer     : () => {
+
+    },
+    getSelector      : s => {
         return window["\x61\x74\x6F\x62"](s);
     },
-    getSurvey : () => window[slm.getSelector('U3VydmF0YQ==')]
+    getSurvey        : () => window[slm.getSelector('U3VydmF0YQ==')]
 };
 
 

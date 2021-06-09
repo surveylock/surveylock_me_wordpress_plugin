@@ -11,6 +11,7 @@
         ctaHolderSelector       : '.slm-cta-holder',
         ctaButtonSelector       : '[data-slm-cta]',
         logoTooltipSelector     : '.slm-lock-logo-tooltip',
+        heightFixed             : false
     };
 
 
@@ -87,6 +88,7 @@
                     slmContent.getDataBlock()
                         .hide()
                         .height('')
+                        .css('max-height', '')
                         .addClass('slm-content-show')
                         .fadeIn('fast');
                     slmContent.getSurveyBlock().remove();
@@ -95,19 +97,25 @@
             fixSurveyHeight    : () => {
                 const $iframe = slmContent.getSurveyBlock().find(slmContentParams.surveyIframeSelector);
 
-                if (slmContentConfig.in_popup !== '1' && parseInt(slmContent.getSurveyBlock().height(), 10) < 700) {
-                    slmContent.getSurveyBlock().height('700px');
-                    slmContent.getDataBlock().height('700px');
-                }
+                if (!slmContentParams.heightFixed) {
+                    if (slmContentConfig.in_popup !== '1' && parseInt(slmContent.getSurveyBlock().height(), 10) < 700) {
+                        slmContent.getSurveyBlock().height('700px');
+                        slmContent.getDataBlock().height('700px').css('max-height', '700px');
+                    }
 
-                if (parseInt($iframe.height(), 10) < 800) {
-                    $iframe.height('700px');
+                    if (parseInt($iframe.height(), 10) < 800) {
+                        $iframe.height('700');
+                        slmContentParams.heightFixed = true;
+                    }
                 }
             },
             showInterview      : () => {
                 if (slmContent._interviewStarted === false) {
                     slmContent.removeSurveyLoader(true);
                     slmContent.fixSurveyHeight();
+                    setTimeout(slmContent.fixSurveyHeight, 600);
+                    setTimeout(slmContent.fixSurveyHeight, 1600);
+                    setTimeout(slmContent.fixSurveyHeight, 3200);
 
                     slmContent._interviewStarted = true;
                 }
@@ -116,9 +124,8 @@
 
         slmContent.addSurveyLoader();
 
-        slm.init();
         slm.readyCallback(() => {
-            slm.log('SurveyLock.me Content addon:: Loading Survey');
+            slm.log('SurveyLock.me Content Integration:: Loading interview');
 
             const options = {
                 brand     : slmContentConfig.brand,
@@ -132,9 +139,8 @@
             const s = slm.createSurveywall(options);
 
             s.on('load', function (data) {
-                slm.trigger('slm.content.loaded');
-                slm.log('SurveyLock.me Content addon:: Survey loaded. Status: ' + data.status);
-                slm.trigger('slm.content.status', data.status);
+                slm.trigger('slm.content.loaded', data.status);
+                slm.log('SurveyLock.me Content Integration:: Interview loaded. Status: ' + data.status);
 
                 slmContent.showCTA(() => {
                     if (data.status === 'monetizable') {
@@ -153,7 +159,7 @@
 
             s.on('interviewStart', function () {
                 slm.trigger('slm.content.started');
-                slm.log('SurveyLock.me Content addon:: Survey started');
+                slm.log('SurveyLock.me Content Integration:: Interview started');
 
                 slmContent.getSurveyBlock()
                     .find(slmContentParams.surveyIframeSelector)
@@ -163,19 +169,19 @@
             });
             s.on('interviewComplete', function () {
                 slm.trigger('slm.content.completed');
-                slm.log('SurveyLock.me Content addon:: Survey completed');
+                slm.log('SurveyLock.me Content Integration:: Interview completed');
 
                 slmContent.showData('slm-content-completed');
             });
             s.on('interviewAbandon', function () {
                 slm.trigger('slm.content.abandoned');
-                slm.log('SurveyLock.me Content addon:: Survey abandoned');
+                slm.log('SurveyLock.me Content Integration:: Interview abandoned');
 
                 slmContent.showData('slm-content-abandoned');
             });
             s.on('interviewSkip', function () {
                 slm.trigger('slm.content.skipped');
-                slm.log('SurveyLock.me Content addon:: Survey skipped');
+                slm.log('SurveyLock.me Content Integration:: Interview skipped');
 
                 slmContent.showData('slm-content-skipped');
             });
@@ -183,7 +189,7 @@
         });
         slm.failCallback(() => {
             slm.trigger('slm.content.failed');
-            slm.log('Survey failed to load');
+            slm.log('SurveyLock.me Content Integration:: Survey failed');
 
             slmContent.showData('slm-content-failed');
         });
@@ -194,10 +200,47 @@
         const $blocks = $(slmContentParams.blockSelector);
 
         if ($blocks.length) {
+            slm.init();
+
             $blocks.each(function () {
                 slmContentInit($, $(this));
-            })
+            });
+
+            slm.applyCallbacks();
         }
+
+        $(document)
+            .on('slm.content.loaded', function (e, status) {
+                slm.gtag('event', status, {
+                    'event_category' : 'SurveyLock - Content',
+                    'event_label'    : window.location.href
+                });
+            })
+            .on('slm.content.started', function () {
+                slm.gtag('event', 'Interview started', {
+                    'event_category' : 'SurveyLock - Content',
+                    'event_label'    : window.location.href
+                });
+            })
+            .on('slm.content.completed', function () {
+                slm.gtag('event', 'Interview completed', {
+                    'event_category' : 'SurveyLock - Content',
+                    'event_label'    : window.location.href
+                });
+                slm.fbq('track', 'Lead');
+            })
+            .on('slm.content.abandoned', function () {
+                slm.gtag('event', 'Interview abandoned', {
+                    'event_category' : 'SurveyLock - Content',
+                    'event_label'    : window.location.href
+                });
+            })
+            .on('slm.content.failed', function () {
+                slm.gtag('event', 'Survey failed', {
+                    'event_category' : 'SurveyLock - Content',
+                    'event_label'    : window.location.href
+                });
+            });
     });
 
     slm.log('SurveyLock.me Content addon initialized');
